@@ -52,7 +52,8 @@
 
         mon.html(tue.html()); // Monday gets Tuesday
         tue.html(wed.html()); // Tuesday get Wednesday
-        wed.html(rest);       // Wednesday is a Rest Day
+        wed.html(thr.html());       // Wednesday gets Thursday
+        thr.html(rest);      // Thursday is a rest day
         fri.html(sat.html()); // Friday gets Saturday
         sat.html(rest);       // Saturday & Sunday are Rest Days.
         sun.html(rest);
@@ -72,7 +73,7 @@
 
         mon.html(tue.html()); // Monday gets Tuesday
         tue.html(wed.html()); // Tuesday get Wednesday
-        wed.html(rest);       // Wednesday is a Rest Day
+        wed.html(thr.html());       // Wednesday is a Rest Day
         thr.html(sat.html()); // Saturday is the new day before Challenge day.
         fri.html(challenge);  // Friday is the new Challenge day.
 
@@ -91,20 +92,20 @@
             .css("padding", "5px")
             .css("backgroundColor", "#FC4C02")
             .css("color", "#eee")
-.css("fontWeight", "bold")
-.css("textAlign", "center")
+            .css("fontWeight", "bold")
+            .css("textAlign", "center")
             .css("zIndex", "1")
-.css("boxShadow", "5px 5px 5px #ddd");
+            .css("boxShadow", "5px 5px 5px #ddd");
 
-$div.append($('<div>adjust schedule</div>')
-.css("fontSize", "2em"));
+        $div.append($('<div>adjust schedule</div>')
+                    .css("fontSize", "2em"));
 
         $div.click(function() {
             shiftSchedule();
             $div.fadeOut();
         });
 
-window.kudoDiv = $div;
+        window.kudoDiv = $div;
         return $div;
     }
 })();
