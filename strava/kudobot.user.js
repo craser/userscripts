@@ -23,7 +23,13 @@ $(window).on('load', function () {
             console.log("Loading KudoBot");
             var t = function () {
                 var s = o("<div>").css("position", "fixed").css("left", "10px").css("bottom", "10px").css("borderRadius", "40px").css("height", "80px").css("width", "80px").css("padding", "5px").css("backgroundColor", "#FC4C02").css("color", "#eee").css("fontWeight", "bold").css("textAlign", "center").css("zIndex", "1").css("boxShadow", "5px 5px 5px #ddd");
-                return s.append(o('<div class="kudocount">0</div>').css("fontSize", "2em")), s.append(o('<div class="kudos">kudos</div>').css("fontSize", "0.8em")), s.click(function () {
+                var w = o("<div>").css("position", "absolute")
+                    .css("top", "50%")
+                    .css("left", "50%")
+                    .css("transform", "translate(-50%, -50%)");
+                s.append(w);
+
+                return w.append(o('<div class="kudocount">0</div>').css("fontSize", "2em")), w.append(o('<div class="kudos">kudos</div>').css("fontSize", "0.8em")), s.click(function () {
                     s.fadeOut()
                 }), c = setTimeout(function () {
                     s.fadeOut()
