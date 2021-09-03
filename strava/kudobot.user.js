@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name       KudoBot
 // @namespace  http://dreadedmonkeygod.net
-// @version    9
+// @version    10
 // @description Automatically click on the "Give Kudos" buttons for all activities.
 // @match      https://*.strava.com/dashboard*
 // @require http://code.jquery.com/jquery-3.3.1.min.js
@@ -34,9 +34,9 @@ $(window)
 
                 $contents.append($('<div class="kudocount">0</div>')
                     .css('fontSize', '2em')), $contents.append($('<div class="kudos">kudos</div>')
-                    .css('fontSize', '0.8em')), $circle.click(function () {
-                    $circle.fadeOut();
-                });
+                    .css('fontSize', '0.8em'));
+
+                $circle.on('click', giveAllKudos);
 
                 return $circle;
             }
@@ -45,99 +45,105 @@ $(window)
                 console.log.apply(console, arguments);
             }
 
-            function bindMutationListener(node, f) {
-                var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
-                var observer = new MutationObserver(f);
-                observer.observe(node, { childList: true, subtree: true });
-                return observer;
-            }
-
-            function getActivityId($container) {
-                return $('[data-testid="activity_name"]', $container).prop('href');
-            }
-
-            function getActivityName($container) {
-                return $('[data-testid="activity_name"]', $container).text();
-            }
-
-            function hasKudos($node) {
-                return !!$('[data-testid="filled_kudos"]', $node).length;
-            }
-
-            function getKudosButton($activity) {
-                var $button = $('[data-testid="kudos_button"]', $activity);
-                return $button;
-            }
-
-            function canGiveKudos($node) {
-                if (hasKudos($node)) {
-                    return false;
-                } else if (getKudosButton($node).is('[title="View all kudos"]')) {
-                    return false;
-                } else {
-                    return true;
-                }
-            }
-
             function updateCount(count) {
                 $('.kudocount').text(count);
             }
 
-            var clickKudosButton = (function () {
-                var count = 0;
-                return function ($activity) {
-                    var $button = $('[data-testid="kudos_button"]', $activity);
-                    var observer = bindMutationListener($activity[0], function () {
-                        if (hasKudos($activity)) {
-                            count++;
-                            updateCount(count);
-                            $button.css('border', '5px solid #0f0');
-                            observer.disconnect();
-                        }
-                    });
-                    log({ message: 'clicking', name: getActivityName($activity) });
-                    $button.css('border', '5px solid #f00');
-                    $button.click();
+            var incrementCount = (function () {
+                var total = 0;
+                return function(count) {
+                    total += count;
+                    updateCount(total);
                 }
             })();
 
-
-            function giveKudos($activity) {
-                var name = getActivityName($activity);
-                if (canGiveKudos($activity)) {
-                    log('clicking: ' + name);
-                    clickKudosButton($activity)
-                } else {
-                    log('already has kudos: ' + name);
-                }
-            }
-
-            function giveAllKudos($) {
-                $('[data-testid="web-feed-entry"]').each(function () {
-                    giveKudos($(this));
+            function bindMutationListener($node, f) {
+                var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+                $node.each(function () {
+                    var observer = new MutationObserver(f);
+                    observer.observe(this, { childList: true, subtree: true, attributes: true });
                 });
             }
 
-            var detectKudos = (function () {
-                var count = 0;
+            function debounce(f, ms) {
+                var token;
                 return function () {
-                    $('[data-testid="web-feed-entry"]').each(function () {
-                        var $activity = $(this);
-                        if (hasKudos($activity)) {
-                            count++;
-                            updateCount(count);
-                            $button.css('border', '5px solid #0f0');
-                            observer.disconnect();
-                        }
-                    });
+                    if (token) {
+                        clearTimeout(token);
+                    }
+                    token = setTimeout(function () {
+                        token = null;
+                        f.apply(null, arguments);
+                    }, ms);
                 }
-            })();
+            }
+
+            function getKudosButtons() {
+                return $('[data-testid="kudos_button"]');
+            }
+
+            function isClickable() {
+                return $(this).is('[title="Give kudos"]');
+            }
+
+            function getUnfilledKudos() {
+                return getKudosButtons()
+                    .filter(isUnmarked)
+                    .filter(isClickable)
+                    .filter(function () {
+                        return !!$(this).find('[data-testid="unfilled_kudos"]').length;
+                    });
+            }
+
+            function isUnmarked() {
+                return !$(this).is('.kudobot-marked');
+            }
+
+            function isMarked() {
+                return $(this).is('.kudobot-marked');
+            }
+
+            function markUnfilled($buttons) {
+                $buttons
+                    .addClass('kudobot-marked');
+                    //.css('border', '5px solid #f00');
+            }
+
+            function markAsFilled($buttons) {
+                $buttons
+                    .removeClass('kudobot-marked');
+                    //.css('border', '5px solid #0f0');
+
+                incrementCount($buttons.length);
+            }
+
+            function isFilled() {
+                return !!$(this).find('[data-testid="filled_kudos"]').length;
+            }
+
+            function markGivenKudos() {
+                var $filled = getKudosButtons()
+                    .filter(isMarked)
+                    .filter(isFilled);
+                markAsFilled($filled);
+            }
+
+            function giveAllKudos() {
+                var $buttons = getUnfilledKudos();
+                markUnfilled($buttons);
+                $buttons.click();
+            }
 
             $(function () {
                 console.log('Loading KudoBot');
                 var display = buildKudoCountDisplay()
                 $('body').append(display);
-                giveAllKudos($);
+
+                giveAllKudos();
+                bindMutationListener($('body'), debounce(function (nodes) {
+                    giveAllKudos();
+                    markGivenKudos();
+                }, 200));
             });
         }
 
