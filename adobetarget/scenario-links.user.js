@@ -35,8 +35,119 @@
             var query = $('.preview-link-textarea', $container).text();
             links.push({ text: text, query: query });
         });
-        debugger;
         return links;
+    }
+
+
+    function getTicketLinkMarkdown(testName) {
+        var ticket = testName.replace(/.*(GEAT-\d+).*/, '$1');
+        var url = 'https://underarmour.atlassian.net/browse/' + ticket;
+        return '[' + ticket + '](' + url + ')';
+    }
+
+    function formatMarkdown(environment, name, links) {
+        var ticketLink = getTicketLinkMarkdown(name);
+        var markdown = '**A/B Test Notes**' +
+            '\n- **Ticket:** ' + ticketLink +
+            '\n- **Test Name:** ```' + name + '```' +
+            '\n- **Environment:** ```' + environment + '```' +
+            '\n- **QA Links**';
+
+        links.forEach(function (link) {
+            markdown += '\n    - **' + link.text + ':** ```' + link.query + '```';
+        });
+
+        return markdown;
+    }
+
+    function showMarkdownDisplay($container, markdown) {
+
+        var $textarea = $('<textarea readonly="true">')
+            .text(markdown)
+            .on('click', function (e) { $(this).select(); })
+            .css({
+                width: '90%',
+                height: '90%',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            });
+
+        var $display = $('<div class="js-json-display">')
+            .append($textarea)
+            .css({
+                width: '80%',
+                height: '80%',
+                background: 'white',
+                border: '3px solid #555',
+                zIndex: '1041',
+                borderRadius: '5px',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            })
+
+        var $screen = $('<div>')
+            .css({
+                background: 'black',
+                opacity: '0.5',
+                zIndex: '1040',
+                width: '100%',
+                height: '100%',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)'
+            })
+            .on('click', function () {
+                $display.remove();
+                $screen.remove();
+            });
+        $container.append($screen);
+        $container.append($display);
+        return $display;
+    }
+
+
+    function buildMarkdownButton() {
+        var $button = $('<button is="coral-button" variant="primary" type="button" class="coral3-Button coral3-Button--primary" size="M">')
+            .append($('<coral-button-label>').text('NOTES'))
+            .addClass('js-json-link')
+            .css({
+                'margin-right': '1rem',
+                'background-color': 'lime',
+                'border-color': 'lime',
+                'text-shadow': 'none'
+            });
+        return $button;
+    }
+
+    function getActivityName($container) {
+        var $name = $('.coral-Form-fieldlabel', $container).filter(function () {
+            return /activity name/i.test($(this).text());
+        })
+        var $wrapper = $name.parents('.coral-Form-fieldwrapper');
+        var $info  = $('.coral-Form-fieldinfo', $wrapper);
+        var activityName = $info.text();
+        return activityName;
+    }
+
+    function addMarkdownButton() {
+        var $container = getContainer();
+        var environment = $('.coral3-Select-label div').text().trim();
+        var name = getActivityName($container);
+        var links = getLinks($container);
+        var $button = buildMarkdownButton(name, links);
+
+        $button.on('click', function () {
+            var markdown = formatMarkdown(environment, name, links);
+            showMarkdownDisplay($container, markdown);
+        });
+
+        var $header = $('.fullscreen-dialog-header-button:visible');
+        $button.insertBefore($('button:first', $header));
     }
 
     function buildScenarioLink(text, query) {
@@ -56,19 +167,21 @@
         return $link;
     }
 
+    function getContainer() {
+        return $('.activity-qa-dialog:visible');
+    }
+
     function addScenarioLinks() {
-        debugger;
-        var $container = $('.activity-qa-dialog:visible');
+        var $container = getContainer();
         getLinks($container).forEach(function (link) {
-            debugger;
             var $link = buildScenarioLink(link.text, link.query);
             var $header = $('.fullscreen-dialog-header-button:visible');
-            $link.insertBefore($('button', $header));
+            $link.insertBefore($('button:first', $header));
         });
     }
 
     function pageReady() {
-        var $container = $('.activity-qa-dialog:visible');
+        var $container = getContainer();
         var links = $('.js-scenario-link', $container);
         debug({
             'activity-qa-dialog': $container.length,
@@ -78,8 +191,16 @@
         return $container.length && !links.length;
     }
 
+    function letHeaderSpanStretch() {
+        $('.fullscreen-dialog-header-button').css({
+            width: 'fit-content'
+        });
+    }
+
     function omMutation(e) {
         if (pageReady()) {
+            letHeaderSpanStretch();
+            addMarkdownButton();
             addScenarioLinks();
         }
     }
