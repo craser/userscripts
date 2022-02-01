@@ -48,6 +48,7 @@
     function formatMarkdown(environment, name, links) {
         var ticketLink = getTicketLinkMarkdown(name);
         var markdown = '**A/B Test Notes**' +
+            '\n' +
             '\n- **Ticket:** ' + ticketLink +
             '\n- **Test Name:** ```' + name + '```' +
             '\n- **Environment:** ```' + environment + '```' +
