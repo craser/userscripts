@@ -135,9 +135,14 @@
         return activityName;
     }
 
+    function getEnvironmentText() {
+        var environment =$('.overview-section.e2e-overview-section.border-bottom:first div').text().trim();
+        return environment;
+    }
+
     function addMarkdownButton() {
         var $container = getContainer();
-        var environment = $('.coral3-Select-label div').text().trim();
+        var environment = getEnvironmentText();
         var name = getActivityName($container);
         var links = getLinks($container);
         var $button = buildMarkdownButton(name, links);
