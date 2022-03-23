@@ -45,7 +45,7 @@
         return '[' + ticket + '](' + url + ')';
     }
 
-    function formatMarkdown(environment, name, links) {
+    function formatMarkdown(environment, name, qaParam, links) {
         var ticketLink = getTicketLinkMarkdown(name);
         var markdown = '**A/B Test Notes**' +
             '\n' +
@@ -55,7 +55,8 @@
             '\n- **QA Links**';
 
         links.forEach(function (link) {
-            markdown += '\n    - **' + link.text + ':** ```' + link.query + '```';
+            var query = `${link.query}${qaParam}`;
+            markdown += '\n    - **' + link.text + ':** ```' + query + '```';
         });
 
         return markdown;
@@ -135,6 +136,20 @@
         return activityName;
     }
 
+    function getAudienceQAParam($container) {
+        var $name = $('.coral-Form-fieldlabel', $container).filter(function () {
+            return /audience/i.test($(this).text());
+        })
+        var $wrapper = $name.parents('.coral-Form-fieldwrapper');
+        var $info  = $('.coral-Form-fieldinfo', $wrapper);
+        var audienceParam = $info.text();
+        if (/adobeQA/.test(audienceParam)) {
+            return `&${audienceParam.trim()}`;
+        } else {
+            return '';
+        }
+    }
+
     function getEnvironmentText() {
         var environment =$('.overview-section.e2e-overview-section.border-bottom:first div').text().trim();
         return environment;
@@ -144,11 +159,12 @@
         var $container = getContainer();
         var environment = getEnvironmentText();
         var name = getActivityName($container);
+        var qaParam = getAudienceQAParam($container);
         var links = getLinks($container);
         var $button = buildMarkdownButton(name, links);
 
         $button.on('click', function () {
-            var markdown = formatMarkdown(environment, name, links);
+            var markdown = formatMarkdown(environment, name, qaParam, links);
             showMarkdownDisplay($container, markdown);
         });
 
@@ -156,8 +172,8 @@
         $button.insertBefore($('button:first', $header));
     }
 
-    function buildScenarioLink(text, query) {
-        let href = 'javascript:(function(q) { window.location.replace(window.location.href.replace(/(\\?.*|$)/, q)); })("' + query + '")';
+    function buildScenarioLink(text, query, qaParam) {
+        let href = `javascript:(function(q) { window.location.replace(window.location.href.replace(/(\\?.*|$)/, q)); })("${query}${qaParam}")`;
         debug({ msg: 'link computed', href: href });
         var $link = $('<a is="coral-button" variant="primary" type="button" class="coral3-Button coral3-Button--primary" size="M">')
             .attr('href', href)
@@ -179,8 +195,9 @@
 
     function addScenarioLinks() {
         var $container = getContainer();
+        var qaParam = getAudienceQAParam($container);
         getLinks($container).forEach(function (link) {
-            var $link = buildScenarioLink(link.text, link.query);
+            var $link = buildScenarioLink(link.text, link.query, qaParam);
             var $header = $('.fullscreen-dialog-header-button:visible');
             $link.insertBefore($('button:first', $header));
         });
