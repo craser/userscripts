@@ -14,6 +14,13 @@
 (function() {
     'use strict';
 
+    var FORBIDDEN_STRINGS = [
+        'debugger',
+        'I want to be an Air Force Ranger!',
+        'I want to live a life of danger!',
+        'alert'
+    ];
+
     function debug() {
         console.log.apply(console, arguments);
     }
@@ -34,6 +41,34 @@
         return e.key == 's' && e.ctrlKey;
     }
 
+    function bindMutationListener(node, f) {
+        var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
+        var observer = new MutationObserver(f);
+        try {
+            observer.observe(node, { childList: true, subtree: true, attributes: false });
+        } catch (e) {
+            console.log({ error: e });
+        }
+    }
+
+    function getCodeEditAreaConatiner() {
+        var container = document.getElementsByClassName('vec-container')[0];
+        return container;
+    }
+
+    function getCodeMirror(container) {
+        var code = container.getElementsByClassName('code-mirror')[0];
+        return code;
+    }
+
+    function hasWarnings(code) {
+        var warn = false;
+        FORBIDDEN_STRINGS.forEach(function (forbidden) {
+            warn = warn || code.value.indexOf(forbidden) >= 0;
+        });
+        return warn;
+    }
+
     $(function () {
         debugger;
         debug({
@@ -50,6 +85,14 @@
             if (isCtrlS(e)) {
                 clickButton();
             }
-        })
+        });
+
+        bindMutationListener(document.body, function () {
+            var container = getCodeEditAreaConatiner();
+            var code = getCodeMirror(container);
+            var warn = hasWarnings(code);
+            // CAREFUL! Don't trigger an infinite loop of mutations & updates. Don't listen for attribute changes!
+            container.setAttribute('style', (warn ? 'background: red' : 'background: green'));
+        });
     });
 })();
