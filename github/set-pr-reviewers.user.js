@@ -10,34 +10,38 @@
 // @require http://code.jquery.com/jquery-3.3.1.min.js
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
-    let match = window.location.href.match(/reviewers=(?<reviewers>[^&]+)/);
-    if (match) {
-        let reviewersParam = match.groups.reviewers;
-        let reviewers = decodeURIComponent(reviewersParam);
-        let container = document.querySelector('#reviewers-select-menu');
-        let summary = container.querySelector('summary');
-        summary.click();
-        let input = container.querySelector('#review-filter-field');
-        input.value = reviewers;
-        input.click();
-
-        new Promise((resolve, reject) => {
-            let interval = setInterval(() => {
-                let items = container.querySelectorAll('.select-menu-item');
-                if (items.length == 1) {
-                    clearInterval(interval);
-                    resolve();
-                }
-            }, 100);
-        })
-            .then(() => {
-                input.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter' }));
-                summary.click();
+    new Promise(resolve => {
+        let match = window.location.href.match(/reviewers=(?<reviewers>[^&]+)/);
+        if (match) {
+            let reviewersParam = match.groups.reviewers;
+            let reviewers = decodeURIComponent(reviewersParam);
+            let container = document.querySelector('#reviewers-select-menu');
+            let summary = container.querySelector('summary');
+            summary.click();
+            let input = container.querySelector('#review-filter-field');
+            input.value = reviewers;
+            input.click();
+            resolve({ container, input, summary })
+        }
+    })
+        .then(({ container, input, summary }) => {
+            return new Promise(resolve => {
+                let interval = setInterval(() => {
+                    let items = container.querySelectorAll('.select-menu-item');
+                    if (items.length == 1) {
+                        clearInterval(interval);
+                        resolve({ container, input, summary })
+                    }
+                }, 100);
             });
-    }
+        })
+        .then(({ container, input, summary }) => {
+            input.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter' }));
+            summary.click();
+        });
 })();
 
 
