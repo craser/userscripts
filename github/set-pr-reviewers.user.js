@@ -13,11 +13,10 @@
 (function () {
     'use strict';
 
-    new Promise(resolve => {
+    new Promise((resolve, reject) => {
         let match = window.location.href.match(/reviewers=(?<reviewers>[^&]+)/);
         if (match) {
-            let reviewersParam = match.groups.reviewers;
-            let reviewers = decodeURIComponent(reviewersParam);
+            let reviewers = decodeURIComponent(match.groups.reviewers);
             let container = document.querySelector('#reviewers-select-menu');
             let summary = container.querySelector('summary');
             summary.click();
@@ -25,15 +24,21 @@
             input.value = reviewers;
             input.click();
             resolve({ container, input, summary })
+        } else {
+            reject('No reviewers param found in URL');
         }
     })
         .then(({ container, input, summary }) => {
-            return new Promise(resolve => {
+            return new Promise((resolve, reject) => {
+                let max = 100;
                 let interval = setInterval(() => {
                     let items = container.querySelectorAll('.select-menu-item');
                     if (items.length == 1) {
                         clearInterval(interval);
                         resolve({ container, input, summary })
+                    } else if (max-- == 0) {
+                        clearInterval(interval);
+                        reject('Timeout waiting for reviewers to load');
                     }
                 }, 100);
             });
@@ -41,6 +46,9 @@
         .then(({ container, input, summary }) => {
             input.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter' }));
             summary.click();
+        })
+        .catch(err => {
+            console.error(err);
         });
 })();
 
