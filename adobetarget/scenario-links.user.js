@@ -45,13 +45,40 @@
         return '[' + ticket + '](' + url + ')';
     }
 
+    function hasWarnings() {
+        var code = document.getElementsByClassName('code-mirror');
+        var FORBIDDEN_STRINGS = [
+            'debugger',
+            'I want to be an Air Force Ranger!',
+            'I want to live a life of danger!',
+            'alert'
+        ];
+
+        var warn = false;
+        FORBIDDEN_STRINGS.forEach(function (forbidden) {
+            warn = warn || code.value.indexOf(forbidden) >= 0;
+        });
+        return warn;
+    }
+
+    function getDebuggingRemovedIcon() {
+        try {
+            return hasWarnings() ? '❌' : '✅';
+        } catch (e) {
+            console.log({ message: 'error checking code warnings', error: e });
+            return '❓';
+        }
+    }
+
     function formatMarkdown(environment, name, qaParam, links) {
         var ticketLink = getTicketLinkMarkdown(name);
         var markdown = '**A/B Test Notes**' +
             '\n' +
             '\n- **Ticket:** ' + ticketLink +
             '\n- **Test Name:** ```' + name + '```' +
+            '\n- **[Adobe Target Action](' + window.location.href + ')**' +
             '\n- **Environment:** ```' + environment + '```' +
+            '\n- **Debugging Removed:** ' + getDebuggingRemovedIcon() +
             '\n- **QA Links**';
 
         links.forEach(function (link) {
@@ -172,8 +199,22 @@
         $button.insertBefore($('button:first', $header));
     }
 
+
+    /**
+     * Only here so we can render to a string & embed in a scriptlet.
+     * @param query
+     */
+    function switchScenario(query) {
+        let qp = new URLSearchParams(query);
+        let loc = new URL(window.location.href);
+        Array.from(qp.keys()).forEach(k => {
+            loc.searchParams.set(k, qp.get(k));
+        });
+        window.location.replace(loc.toString());
+    }
+
     function buildScenarioLink(text, query, qaParam) {
-        let href = `javascript:(function(q) { window.location.replace(window.location.href.replace(/(\\?.*|$)/, q)); })("${query}${qaParam}")`;
+        let href = `javascript:(${switchScenario.toString()})("${query}${qaParam}")`;
         debug({ msg: 'link computed', href: href });
         var $link = $('<a is="coral-button" variant="primary" type="button" class="coral3-Button coral3-Button--primary" size="M">')
             .attr('href', href)
