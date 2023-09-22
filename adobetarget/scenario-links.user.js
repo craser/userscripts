@@ -178,7 +178,13 @@
     }
 
     function getEnvironmentText() {
-        var environment =$('.overview-section.e2e-overview-section.border-bottom:first div').text().trim();
+        debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
+        let environment = $('h4', '.overview-section.e2e-overview-section.border-bottom')
+            .filter(function () { return /Workspace/.test($(this).text()); })
+            .parent()
+            .find('div')
+            .text();
+
         return environment;
     }
 
