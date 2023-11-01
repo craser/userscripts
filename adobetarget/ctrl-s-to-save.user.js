@@ -70,7 +70,6 @@
     }
 
     $(function () {
-        debugger;
         debug({
             msg: 'binding',
             href: window.location.href
