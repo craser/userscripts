@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Adobe Target Scenario Link Gen
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      1
 // @description  try to take over the world!
 // @author       You
 // @match        https://underarmourinc.experiencecloud.adobe.com/content/mac/underarmourinc/target/activities.html*
@@ -28,12 +28,19 @@
     }
 
     function getLinks($container) {
+        function toQuery(text) {
+            if (text.startsWith('http')) {
+                return `?${new URL(text).searchParams.toString()}`;
+            } else {
+                return text;
+            }
+        }
         var links = []; // [{ text, query }]
         $('.copy-to-clipboard', $container).each(function () {
             var $button = $(this);
             let $container = $button.closest('.preview-link');
             var text = $('.link-title', $container).text();
-            var query = $('.preview-link-textarea', $container).text();
+            var query = toQuery($('.preview-link-textarea', $container).text());
             links.push({ text: text, query: query });
         });
         return links;
