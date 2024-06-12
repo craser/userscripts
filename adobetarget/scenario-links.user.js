@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Adobe Target Scenario Link Gen
 // @namespace    http://tampermonkey.net/
-// @version      1
-// @description  try to take over the world!
+// @version      2
+// @description  Generate scenario links for Adobe Target
 // @author       You
 // @match        https://underarmourinc.experiencecloud.adobe.com/content/mac/underarmourinc/target/activities.html*
 // @require http://code.jquery.com/jquery-3.3.1.min.js
@@ -256,83 +256,6 @@
         });
     }
 
-
-    function buildJsonButton(link) {
-        var $button = $('<button is="coral-button" variant="primary" type="button" class="coral3-Button coral3-Button--primary" size="M">')
-            .append($('<coral-button-label>').text(`${link.text} JSON`))
-            .addClass('js-json-link')
-            .css({
-                'margin-right': '1rem',
-                'background-color': 'purple',
-                'border-color': 'purple',
-                'text-shadow': 'none'
-            });
-        return $button;
-    }
-
-    /**
-     * Scenario names in Adobe Target are pulled from the activity name.
-     * HOWEVER, we need scenario names in our codebase to match directory
-     * names, etc.
-     *
-     * The Adobe Target convention is something like: "Challenger A_THX-1138"
-     * The codebase convention is something like: "challengerA", "control", etc.
-     *
-     * @param atScenarioName
-     */
-    function toCodebaseScenarioId(atScenarioName) {
-        let challengerRegex = /Challenger ([A-Z])_(.*)/i;
-        let challengerMatch = challengerRegex.exec(atScenarioName);
-        let controlRegex = /Control_(.*)/i;
-        let controlMatch = controlRegex.exec(atScenarioName);
-        if (challengerMatch){
-            return `challenger${challengerMatch[1].toUpperCase()}`;
-        } else if (controlMatch) {
-            return 'control'
-        } else {
-            return atScenarioName; // default to something we can backtrace later
-        }
-    }
-
-    function addJsonButton(link) {
-        var $container = getContainer();
-        var environment = getEnvironmentText();
-        var qaParam = getAudienceQAParam($container);
-        var $button = buildJsonButton(link);
-        var name = toCodebaseScenarioId(link.text);
-
-        var scenario = {
-            name,
-            atName: link.text,
-            environment,
-            qaParams: `${link.query}${qaParam}`,
-            locales: ['en-us', 'en-ca', 'fr-ca']
-        }
-
-        $button.on('click', function () {
-            var json = JSON.stringify(scenario, null, 2);
-            GM_setClipboard(json);
-            alert(`JSON for ${name} (${link.text}) copied to clipboard`);
-        });
-
-        return $button;
-    }
-
-    function addScenarioJsonButtons() {
-        debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
-        try {
-            var $container = getContainer();
-            getLinks($container).forEach(function (link) {
-                var $button = addJsonButton(link);
-                var $header = $('.fullscreen-dialog-header-button:visible');
-                $button.insertBefore($('button:first', $header));
-            });
-        } catch (e) {
-            debugger;
-            console.log(e);
-        }
-    }
-
     function pageReady() {
         var $container = getContainer();
         var links = $('.js-scenario-link', $container);
@@ -356,7 +279,6 @@
             debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
             letHeaderSpanStretch();
             addMarkdownButton();
-            addScenarioJsonButtons();
             addScenarioLinks();
         }
     }
