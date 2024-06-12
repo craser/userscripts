@@ -12,7 +12,7 @@
 // @grant GM_setClipboard
 // ==/UserScript==
 
-(function() {
+(function () {
     'use strict';
 
     function debug() {
@@ -35,6 +35,7 @@
                 return text;
             }
         }
+
         var links = []; // [{ text, query }]
         $('.copy-to-clipboard', $container).each(function () {
             var $button = $(this);
@@ -101,7 +102,9 @@
 
         var $textarea = $('<textarea readonly="true">')
             .text(markdown)
-            .on('click', function (e) { $(this).select(); })
+            .on('click', function (e) {
+                $(this).select();
+            })
             .css({
                 width: '90%',
                 height: '90%',
@@ -166,7 +169,7 @@
             return /activity name/i.test($(this).text());
         })
         var $wrapper = $name.parents('.coral-Form-fieldwrapper');
-        var $info  = $('.coral-Form-fieldinfo', $wrapper);
+        var $info = $('.coral-Form-fieldinfo', $wrapper);
         var activityName = $info.text();
         return activityName;
     }
@@ -176,7 +179,7 @@
             return /audience/i.test($(this).text());
         })
         var $wrapper = $name.parents('.coral-Form-fieldwrapper');
-        var $info  = $('.coral-Form-fieldinfo', $wrapper);
+        var $info = $('.coral-Form-fieldinfo', $wrapper);
         var audienceParam = $info.text();
         if (/adobeQA/.test(audienceParam)) {
             return `&${audienceParam.trim()}`;
@@ -187,7 +190,9 @@
 
     function getEnvironmentText() {
         let environment = $('h4', '.overview-section.e2e-overview-section.border-bottom')
-            .filter(function () { return /Workspace/.test($(this).text()); })
+            .filter(function () {
+                return /Workspace/.test($(this).text());
+            })
             .parent()
             .find('div')
             .text();
@@ -274,6 +279,38 @@
         });
     }
 
+    /**
+     * Scenario names in Adobe Target are pulled from the activity name.
+     * HOWEVER, we need scenario names in our codebase to match directory
+     * names, etc.
+     *
+     * The Adobe Target convention is something like: "Challenger A_THX-1138"
+     * The codebase convention is something like: "challengerA", "control", etc.
+     *
+     * @param atScenarioName
+     */
+    function toCodebaseScenarioId(atScenarioName) {
+        let challengerRegex = /Challenger ([A-Z])_(.*)/i;
+        let challengerMatch = challengerRegex.exec(atScenarioName);
+        let controlRegex = /Control_(.*)/i;
+        let controlMatch = controlRegex.exec(atScenarioName);
+        if (challengerMatch) {
+            return `challenger${challengerMatch[1].toUpperCase()}`;
+        } else if (controlMatch) {
+            return 'control'
+        } else {
+            return atScenarioName; // default to something we can backtrace later
+        }
+    }
+
+    function updateCurrentScenarioIdentifier() {
+        let scenarioName = $('.experience-rail-container .experience-rail .item-row.active .item-name')
+            .text().trim()
+        let scenarioId = toCodebaseScenarioId(scenarioName);
+        console.log(`scenario: ${scenarioName} -> ${scenarioId}`, window);
+        window.scenarioId = scenarioId;
+    }
+
     function omMutation(e) {
         if (pageReady()) {
             debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
@@ -281,6 +318,7 @@
             addMarkdownButton();
             addScenarioLinks();
         }
+        updateCurrentScenarioIdentifier();
     }
 
     $(function () {
