@@ -279,38 +279,6 @@
         });
     }
 
-    /**
-     * Scenario names in Adobe Target are pulled from the activity name.
-     * HOWEVER, we need scenario names in our codebase to match directory
-     * names, etc.
-     *
-     * The Adobe Target convention is something like: "Challenger A_THX-1138"
-     * The codebase convention is something like: "challengerA", "control", etc.
-     *
-     * @param atScenarioName
-     */
-    function toCodebaseScenarioId(atScenarioName) {
-        let challengerRegex = /Challenger ([A-Z])_(.*)/i;
-        let challengerMatch = challengerRegex.exec(atScenarioName);
-        let controlRegex = /Control_(.*)/i;
-        let controlMatch = controlRegex.exec(atScenarioName);
-        if (challengerMatch) {
-            return `challenger${challengerMatch[1].toUpperCase()}`;
-        } else if (controlMatch) {
-            return 'control'
-        } else {
-            return atScenarioName; // default to something we can backtrace later
-        }
-    }
-
-    function updateCurrentScenarioIdentifier() {
-        let scenarioName = $('.experience-rail-container .experience-rail .item-row.active .item-name')
-            .text().trim()
-        let scenarioId = toCodebaseScenarioId(scenarioName);
-        console.log(`scenario: ${scenarioName} -> ${scenarioId}`, window);
-        window.scenarioId = scenarioId;
-    }
-
     function omMutation(e) {
         if (pageReady()) {
             debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
@@ -318,7 +286,6 @@
             addMarkdownButton();
             addScenarioLinks();
         }
-        updateCurrentScenarioIdentifier();
     }
 
     $(function () {
