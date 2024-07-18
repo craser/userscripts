@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Monitor Selected Adobe Target Experience
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  try to take over the world!
 // @author       You
 // @match        https://underarmourinc.experiencecloud.adobe.com/content/mac/underarmourinc/target/activities.html*
@@ -50,12 +50,16 @@
      * @param atScenarioName
      */
     function toCodebaseScenarioId(atScenarioName) {
-        let challengerRegex = /Challenger ([A-Z])_(.*)/i;
+        let challengerRegex = /Challenger (?<scenario>[A-Z])/i;
         let challengerMatch = challengerRegex.exec(atScenarioName);
-        let controlRegex = /Control_(.*)/i;
+        let experienceRegex = /Experience (?<scenario>[A-Z])/i;
+        let experienceMatch = experienceRegex.exec(atScenarioName);
+        let controlRegex = /Control_?(.*)/i;
         let controlMatch = controlRegex.exec(atScenarioName);
         if (challengerMatch) {
-            return `challenger${challengerMatch[1].toUpperCase()}`;
+            return `challenger${challengerMatch.groups.scenario.toUpperCase()}`;
+        } else if (experienceMatch) {
+            return `challenger${experienceMatch.groups.scenario.toUpperCase()}`;
         } else if (controlMatch) {
             return 'control'
         } else {
@@ -96,7 +100,7 @@
             message,
             targetOrigin
         });
-        
+
          */
         top.postMessage(message, targetOrigin);
     }
