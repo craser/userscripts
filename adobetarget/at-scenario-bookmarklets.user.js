@@ -80,7 +80,6 @@
     }
 
     function formatMarkdown(scenario) {
-
         var markdown = '**A/B Test Notes**' +
             '\n' +
             '\n- **Ticket:** ' + getTicketLinkMarkdown(scenario.name) +
@@ -198,21 +197,27 @@
         return environment;
     }
 
-    function addMarkdownButton() {
+    function getScenarioJson() {
         var $container = getContainer();
         var environment = getEnvironmentText();
         var name = getActivityName($container);
         var qaParam = getAudienceQAParam($container);
         var links = getLinks($container);
-        var $button = buildMarkdownButton(name, links);
+        let scenario = {
+            environment,
+            name,
+            qaParam,
+            links
+        };
+        return scenario;
+    }
+
+    function addMarkdownButton() {
+        var $container = getContainer();
+        var scenario = getScenarioJson();
+        var $button = buildMarkdownButton(scenario.name, scenario.links);
 
         $button.on('click', function () {
-            let scenario = {
-                environment,
-                name,
-                qaParam,
-                links
-            };
             var markdown = formatMarkdown(scenario);
             showMarkdownDisplay($container, markdown);
         });
