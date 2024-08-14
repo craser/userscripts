@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Adobe Target Scenario Link Gen
 // @namespace    http://tampermonkey.net/
-// @version      2
+// @version      3
 // @description  Generate scenario links for Adobe Target
 // @author       You
 // @match        https://underarmourinc.experiencecloud.adobe.com/content/mac/underarmourinc/target/activities.html*
@@ -79,21 +79,19 @@
         }
     }
 
-    function formatMarkdown(environment, name, qaParam, links) {
-        var ticketLink = getTicketLinkMarkdown(name);
+    function formatMarkdown(scenario) {
+
         var markdown = '**A/B Test Notes**' +
             '\n' +
-            '\n- **Ticket:** ' + ticketLink +
-            '\n- **Test Name:** ```' + name + '```' +
+            '\n- **Ticket:** ' + getTicketLinkMarkdown(scenario.name) +
+            '\n- **Test Name:** ```' + scenario.name + '```' +
             '\n- **[Adobe Target Action](' + window.location.href + ')**' +
-            '\n- **Environment:** ```' + environment + '```' +
+            '\n- **Environment:** ```' + scenario.environment + '```' +
             '\n- **Debugging Removed:** ' + getDebuggingRemovedIcon() +
-            '\n- **QA Links**';
-
-        links.forEach(function (link) {
-            var query = `${link.query}${qaParam}`;
-            markdown += '\n    - **' + link.text + ':** ```' + query + '```';
-        });
+            '\n- **QA Links**' + scenario.links.map(function (link) {
+                var query = `${link.query}${scenario.qaParam}`;
+                return '\n    - **' + link.text + ':** ```' + query + '```';
+            });
 
         return markdown;
     }
@@ -209,7 +207,13 @@
         var $button = buildMarkdownButton(name, links);
 
         $button.on('click', function () {
-            var markdown = formatMarkdown(environment, name, qaParam, links);
+            let scenario = {
+                environment,
+                name,
+                qaParam,
+                links
+            };
+            var markdown = formatMarkdown(scenario);
             showMarkdownDisplay($container, markdown);
         });
 
@@ -261,6 +265,83 @@
         });
     }
 
+
+    function buildJsonButton(link) {
+        var $button = $('<button is="coral-button" variant="primary" type="button" class="coral3-Button coral3-Button--primary" size="M">')
+            .append($('<coral-button-label>').text(`${link.text} JSON`))
+            .addClass('js-json-link')
+            .css({
+                'margin-right': '1rem',
+                'background-color': 'purple',
+                'border-color': 'purple',
+                'text-shadow': 'none'
+            });
+        return $button;
+    }
+
+    /**
+     * Scenario names in Adobe Target are pulled from the activity name.
+     * HOWEVER, we need scenario names in our codebase to match directory
+     * names, etc.
+     *
+     * The Adobe Target convention is something like: "Challenger A_THX-1138"
+     * The codebase convention is something like: "challengerA", "control", etc.
+     *
+     * @param atScenarioName
+     */
+    function toCodebaseScenarioId(atScenarioName) {
+        let challengerRegex = /Challenger ([A-Z])_(.*)/i;
+        let challengerMatch = challengerRegex.exec(atScenarioName);
+        let controlRegex = /Control_(.*)/i;
+        let controlMatch = controlRegex.exec(atScenarioName);
+        if (challengerMatch){
+            return `challenger${challengerMatch[1].toUpperCase()}`;
+        } else if (controlMatch) {
+            return 'control'
+        } else {
+            return atScenarioName; // default to something we can backtrace later
+        }
+    }
+
+    function addJsonButton(link) {
+        var $container = getContainer();
+        var environment = getEnvironmentText();
+        var qaParam = getAudienceQAParam($container);
+        var $button = buildJsonButton(link);
+        var name = toCodebaseScenarioId(link.text);
+
+        var scenario = {
+            name,
+            atName: link.text,
+            environment,
+            qaParams: `${link.query}${qaParam}`,
+            locales: ['en-us', 'en-ca', 'fr-ca']
+        }
+
+        $button.on('click', function () {
+            var json = JSON.stringify(scenario, null, 2);
+            GM_setClipboard(json);
+            alert(`JSON for ${name} (${link.text}) copied to clipboard`);
+        });
+
+        return $button;
+    }
+
+    function addScenarioJsonButtons() {
+        debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
+        try {
+            var $container = getContainer();
+            getLinks($container).forEach(function (link) {
+                var $button = addJsonButton(link);
+                var $header = $('.fullscreen-dialog-header-button:visible');
+                $button.insertBefore($('button:first', $header));
+            });
+        } catch (e) {
+            debugger;
+            console.log(e);
+        }
+    }
+
     function pageReady() {
         var $container = getContainer();
         var links = $('.js-scenario-link', $container);
@@ -284,6 +365,7 @@
             debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
             letHeaderSpanStretch();
             addMarkdownButton();
+            addScenarioJsonButtons();
             addScenarioLinks();
         }
     }
