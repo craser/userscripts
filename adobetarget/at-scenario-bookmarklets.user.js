@@ -365,6 +365,14 @@
         });
     }
 
+    function updateCurrentScenarioIdentifier() {
+        let scenario = getScenarioJson();
+        let message = { type: 'abba-scenario', scenario };
+        let targetOrigin = 'https://experience.adobe.com';
+        console.log('updating scenario identifier', message);
+        top.postMessage(message, targetOrigin);
+    }
+
     function omMutation(e) {
         if (pageReady()) {
             debugger; // FIXME: DO NOT COMMIT TO CODE REPOSITORY!
@@ -372,6 +380,7 @@
             addMarkdownButton();
             addScenarioJsonButtons();
             addScenarioLinks();
+            updateCurrentScenarioIdentifier();
         }
     }
 

@@ -26,8 +26,11 @@
 
             if (event.origin != 'https://underarmourinc.experiencecloud.adobe.com') {
                 return;
+            } else {
+                let scenarioData = JSON.parse(localStorage.getItem('abba-scenario'));
+                Object.assign(scenarioData, event.data);
+                localStorage.setItem('abba-scenario', JSON.stringify(scenarioData));
             }
-            localStorage.setItem('abba-scenario', JSON.stringify(event.data));
         }
     })
 })();
