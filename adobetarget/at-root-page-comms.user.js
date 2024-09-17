@@ -24,11 +24,23 @@
             } );
              */
 
+            debugger;
             if (event.origin != 'https://underarmourinc.experiencecloud.adobe.com') {
+                console.log('COMS: Event not from expected host. Ignoring.');
                 return;
             } else {
-                let scenarioData = JSON.parse(localStorage.getItem('abba-scenario'));
+                console.log('COMS: Received event from expected host. Processing.', event);
+                let json = localStorage.getItem('abba-scenario');
+                let scenarioData = json ? JSON.parse(json) : {};
+
+                // shove the current URL into event.data.scenario.activityUrl
+                if ('scenario' in event.data) {
+                    console.log('COMS: overwriting activiytUrl with root window URL.', event.data);
+                    event.data.scenario.activityUrl = window.location.href;
+                }
+
                 Object.assign(scenarioData, event.data);
+                console.log('COMS: Saving scenarioData to localStorage.', scenarioData);
                 localStorage.setItem('abba-scenario', JSON.stringify(scenarioData));
             }
         }

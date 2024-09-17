@@ -84,13 +84,14 @@
             '\n' +
             '\n- **Ticket:** ' + getTicketLinkMarkdown(scenario.name) +
             '\n- **Test Name:** ```' + scenario.name + '```' +
-            '\n- **[Adobe Target Action](' + window.location.href + ')**' +
+            '\n- **[Adobe Target Activity](' + scenario.activityUrl + ')**' +
             '\n- **Environment:** ```' + scenario.environment + '```' +
             '\n- **Debugging Removed:** ' + getDebuggingRemovedIcon() +
-            '\n- **QA Links**' + scenario.links.map(function (link) {
+            '\n- **QA Links**' +
+            '\n' + scenario.links.map(function (link) {
                 var query = `${link.query}${scenario.qaParam}`;
-                return '\n    - **' + link.text + ':** ```' + query + '```';
-            });
+                return '    - **' + link.text + ':** ```' + query + '```';
+            }).join('\n');
 
         return markdown;
     }
@@ -199,15 +200,12 @@
 
     function getScenarioJson() {
         var $container = getContainer();
-        var environment = getEnvironmentText();
-        var name = getActivityName($container);
-        var qaParam = getAudienceQAParam($container);
-        var links = getLinks($container);
         let scenario = {
-            environment,
-            name,
-            qaParam,
-            links
+            environment: getEnvironmentText(),
+            name: getActivityName($container),
+            qaParam: getAudienceQAParam($container),
+            links: getLinks($container),
+            activityUrl: window.location.href
         };
         return scenario;
     }
@@ -359,17 +357,22 @@
         return $container.length && !links.length && !jsonLinks.length;
     }
 
+    function isQaOpen() {
+        return !!getContainer();
+    }
+
     function letHeaderSpanStretch() {
         $('.fullscreen-dialog-header-button').css({
             width: 'fit-content'
         });
     }
 
-    function updateCurrentScenarioIdentifier() {
+    function updateScenarioInformation() {
+        console.log('COMS: Updating scenario information');
         let scenario = getScenarioJson();
         let message = { type: 'abba-scenario', scenario };
         let targetOrigin = 'https://experience.adobe.com';
-        console.log('updating scenario identifier', message);
+        console.log('updating scenario information', message);
         top.postMessage(message, targetOrigin);
     }
 
@@ -380,7 +383,7 @@
             addMarkdownButton();
             addScenarioJsonButtons();
             addScenarioLinks();
-            updateCurrentScenarioIdentifier();
+            updateScenarioInformation();
         }
     }
 
