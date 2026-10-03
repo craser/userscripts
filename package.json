@@ -1,0 +1,11 @@
+{
+    "name": "userscripts",
+    "private": true,
+    "scripts": {
+        "test": "playwright test --project=unit --project=integration",
+        "test:e2e": "playwright test --project=e2e"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.56.1"
+    }
+}
