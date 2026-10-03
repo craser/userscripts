@@ -9,7 +9,13 @@ const PROFILE_DIR = path.join(__dirname, '../../.e2e-chrome-profile');
 const MAILBOX_URL = 'https://mail.google.com/mail/u/0/';
 
 test('clicking Refresh in real Gmail checks mail on every other account', async () => {
-    const context = await chromium.launchPersistentContext(PROFILE_DIR, { channel: 'chrome', headless: false });
+    const context = await chromium.launchPersistentContext(PROFILE_DIR, {
+        channel: 'chrome',
+        headless: false,
+        // Chrome encrypts the profile's cookies with the real macOS Keychain; Playwright's default mock keychain
+        // can't decrypt them, so Chrome would discard the Gmail sign-in.
+        ignoreDefaultArgs: ['--use-mock-keychain', '--password-store=basic'],
+    });
     try {
         await context.addInitScript({ path: SCRIPT_PATH });
         const page = await context.newPage();
