@@ -1,2 +1,6 @@
 .idea
 .DS_Store
+node_modules
+test-results
+playwright-report
+.e2e-chrome-profile

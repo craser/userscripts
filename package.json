@@ -1,0 +1,12 @@
+{
+    "name": "userscripts",
+    "private": true,
+    "scripts": {
+        "test": "playwright test --project=unit --project=integration",
+        "test:e2e": "playwright test --project=e2e",
+        "e2e:sign-in": "open -na 'Google Chrome' --args --user-data-dir=\"$PWD/.e2e-chrome-profile\" https://mail.google.com/mail/u/0/"
+    },
+    "devDependencies": {
+        "@playwright/test": "1.64.0"
+    }
+}
